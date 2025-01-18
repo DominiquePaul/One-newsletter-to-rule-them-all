@@ -1,35 +1,111 @@
-import trafilatura
+fcx_user = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDMzejAwMDAycE1VSjRBQU8iLCJlbnRpdGxlbWVudHMiOlsiVEUuUE9EQ0FTVCIsIlRFLkFQUCIsIlRFLldFQiIsIlRFLk5FV1NMRVRURVIiXSwidXNlclR5cGUiOiJzdWJzY3JpYmVyIiwiZXhwIjoxNzQ1MDA4MTI3LCJpYXQiOjE3MzcyMjg1Mjd9.CnXNEWJYzsRxS4hebZIPGryg7IirdvjoK_CJExOVQKU"
+
+import json
+import pickle
+import re
+import time
+from datetime import datetime
+
 import requests
+import trafilatura
+from tqdm import tqdm
 
-def get_article(url, cookie):
-    # Set up headers to mimic a browser
+from scraping_tool.article import Article
+
+
+def fetch_economist_article(url):
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Cookie': f'fcx_user={cookie}'
+        "authority": "www.economist.com",
+        "accept": "*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     }
-    
-    # Make the request
-    response = requests.get(url, headers=headers)
-    
-    # Check if request was successful
-    if response.status_code == 200:
-        return response.text
-    else:
-        print(f"Failed to get article. Status code: {response.status_code}")
-        return None
 
-if __name__ == "__main__":
-    # Article URL and cookie
-    url = "https://www.economist.com/business/2025/01/17/tiktoks-time-is-up-can-donald-trump-save-it"
-    cookie = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDMzejAwMDAycE1VSjRBQU8iLCJlbnRpdGxlbWVudHMiOlsiVEUuUE9EQ0FTVCIsIlRFLkFQUCIsIlRFLldFQiIsIlRFLk5FV1NMRVRURVIiXSwidXNlclR5cGUiOiJzdWJzY3JpYmVyIiwiZXhwIjoxNzQ1MDAyMjE4LCJpYXQiOjE3MzcyMjI2MTh9.cM2j59GvpDbqS7vIMnLm4PoVrSutpht-lU-HOEPTV6U"
-    
-    # Get the article content
-    content = get_article(url, cookie)
-    if content:
-        # Extract article content using trafilatura
-        text = trafilatura.extract(content)
-        if text:
-            print("Article content:")
-            print(text)
-        else:
-            print("Could not extract article content")
+    retries = 0
+    while retries < 3:
+        response = requests.get(url, headers=headers, cookies={"fcx_user": fcx_user})
+        
+        if response.status_code == 429:
+            retries += 1
+            if retries == 3:
+                print(f"Error: Max retries reached for {url}")
+                return None
+            print(f"Rate limited, waiting 10 seconds... (attempt {retries}/3)")
+            time.sleep(10)
+            continue
+            
+        if response.status_code != 200:
+            print(f"Error: Status code {response.status_code}")
+            return None
+            
+        article_content = trafilatura.extract(
+            response.text, output_format="xml", include_comments=False
+        )
+        return Article(
+            heading=response.text.split("<h1")[1].split("</h1>")[0].split(">")[1],
+            subheading=response.text.split("<h2")[1].split("</h2>")[0].split(">")[1],
+            date=datetime.strptime(re.search(r"/(\d{4}/\d{2}/\d{2})/", url).group(1), "%Y/%m/%d"),
+            url=url,
+            content=article_content
+        )
+
+
+def fetch_weekly_edition_urls(edition_url):
+    headers = {
+        "authority": "www.economist.com",
+        "accept": "*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    }
+
+    cookies = {"fcx_user": fcx_user}
+
+    retries = 0
+    while retries < 3:
+        response = requests.get(edition_url, headers=headers, cookies=cookies)
+        
+        if response.status_code == 429:
+            retries += 1
+            if retries == 3:
+                print(f"Error: Max retries reached for {edition_url}")
+                return []
+            print(f"Rate limited, waiting 10 seconds... (attempt {retries}/3)")
+            time.sleep(10)
+            continue
+            
+        if response.status_code != 200:
+            print(f"Error: Status code {response.status_code}")
+            return []
+
+        downloaded = response.text
+        links = []
+        # Look for JSON-LD script tags containing article URLs
+        json_pattern = re.compile(
+            r'{"@type":"ListItem","position":\d+,"url":"(https://www\.economist\.com/[^"]+)"}'
+        )
+        matches = json_pattern.finditer(downloaded)
+        for match in matches:
+            url = match.group(1)
+            links.append(url)
+
+        # Filter for article URLs
+        article_urls = []
+        for link in links:
+            if link.startswith("https://www.economist.com/") and "/2025/" in link:
+                article_urls.append(link)
+
+        return list(set(article_urls))
+
+
+# Example usage:
+edition_url = "https://www.economist.com/weeklyedition/2025-01-18"
+urls = fetch_weekly_edition_urls(edition_url)
+articles = []
+for url in tqdm(urls, desc="Fetching articles"):
+    article = fetch_economist_article(url)
+    if article:
+        articles.append(article)
+
+# Save articles to pickle file
+with open('economist_articles.pkl', 'wb') as f:
+    pickle.dump(articles, f)
