@@ -17,3 +17,10 @@ class Article(BaseModel):
             return v
         except ValueError:
             raise ValueError('Date must be in YYYY-MM-DD format')
+        
+
+class ArticleChunk(BaseModel):
+    article_url: str
+    embedding: list[float]
+    content: str
+    num_characters: int
