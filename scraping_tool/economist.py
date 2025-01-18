@@ -24,7 +24,7 @@ def fetch_economist_article(url):
     retries = 0
     while retries < 3:
         response = requests.get(url, headers=headers, cookies={"fcx_user": fcx_user})
-        
+
         if response.status_code == 429:
             retries += 1
             if retries == 3:
@@ -33,20 +33,22 @@ def fetch_economist_article(url):
             print(f"Rate limited, waiting 10 seconds... (attempt {retries}/3)")
             time.sleep(10)
             continue
-            
+
         if response.status_code != 200:
             print(f"Error: Status code {response.status_code}")
             return None
-            
+
         article_content = trafilatura.extract(
             response.text, output_format="xml", include_comments=False
         )
         return Article(
             heading=response.text.split("<h1")[1].split("</h1>")[0].split(">")[1],
             subheading=response.text.split("<h2")[1].split("</h2>")[0].split(">")[1],
-            date=datetime.strptime(re.search(r"/(\d{4}/\d{2}/\d{2})/", url).group(1), "%Y/%m/%d"),
+            date=datetime.strptime(
+                re.search(r"/(\d{4}/\d{2}/\d{2})/", url).group(1), "%Y/%m/%d"
+            ),
             url=url,
-            content=article_content
+            content=article_content,
         )
 
 
@@ -63,7 +65,7 @@ def fetch_weekly_edition_urls(edition_url):
     retries = 0
     while retries < 3:
         response = requests.get(edition_url, headers=headers, cookies=cookies)
-        
+
         if response.status_code == 429:
             retries += 1
             if retries == 3:
@@ -72,7 +74,7 @@ def fetch_weekly_edition_urls(edition_url):
             print(f"Rate limited, waiting 10 seconds... (attempt {retries}/3)")
             time.sleep(10)
             continue
-            
+
         if response.status_code != 200:
             print(f"Error: Status code {response.status_code}")
             return []
@@ -107,5 +109,5 @@ for url in tqdm(urls, desc="Fetching articles"):
         articles.append(article)
 
 # Save articles to pickle file
-with open('economist_articles.pkl', 'wb') as f:
+with open("economist_articles.pkl", "wb") as f:
     pickle.dump(articles, f)

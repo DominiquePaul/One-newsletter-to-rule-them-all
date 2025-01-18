@@ -2,12 +2,11 @@ from datetime import datetime
 from pprint import pprint
 
 import dotenv
-from weaviate.classes.query import MetadataQuery, Filter
-from weaviate.util import generate_uuid5
-from weaviate import WeaviateClient
-
-
 from article import Article
+from weaviate import WeaviateClient
+from weaviate.classes.query import Filter, MetadataQuery
+from weaviate.util import generate_uuid5
+
 from weaviate_init import init_weaviate_client
 
 dotenv.load_dotenv()
@@ -27,8 +26,13 @@ class Pipeline:
     def delete_article(self, url):
         self.collection.data.delete_by_id(generate_uuid5(url))
 
-    def retrieve_articles(self, topics: list[str], from_date: datetime = None, to_date: datetime = None, top_k: int = 10) -> list[
-        Article]:
+    def retrieve_articles(
+        self,
+        topics: list[str],
+        from_date: datetime = None,
+        to_date: datetime = None,
+        top_k: int = 10,
+    ) -> list[Article]:
         if from_date or to_date:
             raise NotImplementedError("Filtering by date is not yet implemented")
 
@@ -38,7 +42,9 @@ class Pipeline:
                 query=topic,
                 limit=top_k,
                 target_vector=["heading_vector"],
-                return_metadata=MetadataQuery(distance=True, score=True, explain_score=True),
+                return_metadata=MetadataQuery(
+                    distance=True, score=True, explain_score=True
+                ),
                 # filters=Filter..
             )
 
@@ -47,8 +53,7 @@ class Pipeline:
         return response_agg
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         client = init_weaviate_client()
 
@@ -59,7 +64,7 @@ if __name__ == '__main__':
             subheading="This is a test article",
             date="2021-01-01T00:00:00-02:00",
             url="https://www.example.com",
-            content="This is a test article content"
+            content="This is a test article content",
         )
 
         pprint(test_article)

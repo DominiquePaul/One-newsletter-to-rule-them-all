@@ -1,8 +1,9 @@
 # This file is used to scrape the NZZ articles
-from trafilatura import fetch_url, extract
-from feedparser import parse as parse_feed
 from time import strftime
+
 from article import Article
+from feedparser import parse as parse_feed
+from trafilatura import extract, fetch_url
 
 
 def main():

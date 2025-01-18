@@ -13,6 +13,7 @@ dotenv.load_dotenv()
 # client = weaviate.connect_to_weaviate_cloud(..., headers=headers) or
 # client = weaviate.connect_to_local(..., headers=headers)
 
+
 @functools.cache
 def init_weaviate_client():
     jinaai_key = os.getenv("JINAAI_APIKEY")
@@ -21,14 +22,18 @@ def init_weaviate_client():
     }
 
     client = weaviate.connect_to_weaviate_cloud(
-        cluster_url=os.environ['WEAVIATE_ENDPOINT'],  # Replace with your Weaviate Cloud URL
-        auth_credentials=Auth.api_key(os.environ['WEAVIATE_ADMIN_KEY']),  # Replace with your Weaviate Cloud key
-        headers=headers
+        cluster_url=os.environ[
+            "WEAVIATE_ENDPOINT"
+        ],  # Replace with your Weaviate Cloud URL
+        auth_credentials=Auth.api_key(
+            os.environ["WEAVIATE_ADMIN_KEY"]
+        ),  # Replace with your Weaviate Cloud key
+        headers=headers,
     )
     return client
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         client = init_weaviate_client()
 
@@ -38,16 +43,23 @@ if __name__ == '__main__':
             properties=[
                 wc.Property(name="heading", data_type=wc.DataType.TEXT),
                 wc.Property(name="subheading", data_type=wc.DataType.TEXT),
-                wc.Property(name="date", data_type=wc.DataType.DATE, indexRangeFilters=True),
+                wc.Property(
+                    name="date", data_type=wc.DataType.DATE, indexRangeFilters=True
+                ),
                 wc.Property(name="url", data_type=wc.DataType.TEXT),
-                wc.Property(name="content", data_type=wc.DataType.TEXT, indexSearchable=True),
+                wc.Property(
+                    name="content", data_type=wc.DataType.TEXT, indexSearchable=True
+                ),
             ],
             # Define the vectorizer module
             vectorizer_config=[
-                wc.Configure.NamedVectors.text2vec_jinaai(name="heading_vector", source_properties=["heading", "subheading"]),
-                wc.Configure.NamedVectors.text2vec_jinaai(name="content_vector", source_properties=["content"]),
-            ]
-
+                wc.Configure.NamedVectors.text2vec_jinaai(
+                    name="heading_vector", source_properties=["heading", "subheading"]
+                ),
+                wc.Configure.NamedVectors.text2vec_jinaai(
+                    name="content_vector", source_properties=["content"]
+                ),
+            ],
         )
     finally:
         client.close()
