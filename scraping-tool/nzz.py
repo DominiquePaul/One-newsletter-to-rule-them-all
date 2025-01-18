@@ -16,8 +16,9 @@ def main():
         raw_article = fetch_url(page_link)
         article = extract(raw_article, output_format="xml")
         print(article)
+        
+        # From here push each individual piece to the weviate databse
         break
-    
 
 
 
