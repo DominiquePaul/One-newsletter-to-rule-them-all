@@ -8,6 +8,7 @@ export default function Home() {
   const [interests, setInterests] = useState<string[]>(['Technology']);
   const [newInterest, setNewInterest] = useState('');
   const [frequency, setFrequency] = useState('');
+  const [saveButtonText, setSaveButtonText] = useState('Save Preferences');
 
   // Load saved data on component mount
   useEffect(() => {
@@ -30,6 +31,12 @@ export default function Home() {
       frequency
     };
     localStorage.setItem('newsletterPreferences', JSON.stringify(data));
+    
+    // Update button text and reset after 2 seconds
+    setSaveButtonText('Saved!');
+    setTimeout(() => {
+      setSaveButtonText('Save Preferences');
+    }, 2000);
   };
 
   // Handle adding new interest
@@ -46,14 +53,14 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-4">
-      <div className="bg-white shadow-md rounded-lg p-8 max-w-2xl mx-auto">
-        <div className="space-y-6">
-          <h1 className="text-3xl text-teal-800 font-bold mb-4">
+    <div className="max-w-3xl mx-auto py-8 px-4">
+      <div className="bg-white shadow-md rounded-lg p-6 max-w-2xl mx-auto">
+        <div className="space-y-4">
+          <h1 className="text-3xl text-[#0c606c] font-bold mb-4">
             One Newsletter to rule them all
           </h1>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <label htmlFor="email" className="block font-medium">
               Email address
             </label>
@@ -63,42 +70,48 @@ export default function Home() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="w-full p-3 text-lg border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+              className="w-full p-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0c606c] focus:border-transparent"
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <label htmlFor="source" className="block font-medium">
               Select your news sources
             </label>
             <div className="flex flex-wrap gap-2">
-              {['nzz', 'economist'].map((source) => (
-                <label key={source} className="relative flex items-center">
+              {[
+                { id: 'nzz', label: 'NZZ' },
+                { id: 'economist', label: 'The Economist' },
+                { id: 'times', label: 'The Times' },
+                { id: 'wsj', label: 'Wall Street Journal' },
+                { id: 'guardian', label: 'The Guardian' }
+              ].map((source) => (
+                <label key={source.id} className="relative flex items-center">
                   <input
                     type="checkbox"
-                    value={source}
-                    checked={selectedSources.includes(source)}
+                    value={source.id}
+                    checked={selectedSources.includes(source.id)}
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setSelectedSources([...selectedSources, source]);
+                        setSelectedSources([...selectedSources, source.id]);
                       } else {
-                        setSelectedSources(selectedSources.filter(s => s !== source));
+                        setSelectedSources(selectedSources.filter(s => s !== source.id));
                       }
                     }}
                     className="peer sr-only"
                     name="sources"
                   />
-                  <div className="px-4 py-2 text-lg border border-gray-200 rounded-md cursor-pointer 
-                    peer-checked:bg-teal-600 peer-checked:text-white peer-checked:border-transparent
-                    hover:bg-gray-50 peer-checked:hover:bg-teal-700 transition-colors">
-                    {source === 'nzz' ? 'NZZ' : 'The Economist'}
+                  <div className="px-3 py-1.5 text-base border border-gray-200 rounded-md cursor-pointer 
+                    peer-checked:border-[#0c606c] peer-checked:text-[#0c606c]
+                    hover:bg-gray-50 peer-checked:hover:bg-gray-50 transition-colors">
+                    {source.label}
                   </div>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <label htmlFor="interests" className="block font-medium">
               Your interests
             </label>
@@ -109,22 +122,22 @@ export default function Home() {
                   value={newInterest}
                   onChange={(e) => setNewInterest(e.target.value)}
                   placeholder="Add an interest..."
-                  className="flex-1 p-3 text-lg border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                  className="flex-1 p-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0c606c] focus:border-transparent"
                 />
                 <button 
                   onClick={handleAddInterest}
-                  className="px-4 py-2 text-lg bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors">
+                  className="px-3 py-1.5 text-base bg-[#0c606c] text-white rounded-md hover:bg-[#094852] transition-colors">
                   Add
                 </button>
               </div>
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {interests.map((interest) => (
-                  <li key={interest} className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                  <li key={interest} className="flex items-center justify-between p-2 border border-gray-200 rounded-md">
                     <span>{interest}</span>
                     <button 
                       onClick={() => handleRemoveInterest(interest)}
                       className="text-gray-500 hover:text-red-500">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </button>
@@ -134,7 +147,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <label htmlFor="frequency" className="block font-medium">
               Newsletter frequency
             </label>
@@ -142,7 +155,7 @@ export default function Home() {
               id="frequency"
               value={frequency}
               onChange={(e) => setFrequency(e.target.value)}
-              className="w-full p-3 text-lg border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+              className="w-full p-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0c606c] focus:border-transparent"
             >
               <option value="" disabled>Select frequency</option>
               <option value="daily">Every day</option>
@@ -153,9 +166,9 @@ export default function Home() {
 
           <button
             onClick={handleSave}
-            className="w-full px-4 py-2 text-lg bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
+            className="w-full px-3 py-2 text-base bg-[#0c606c] text-white rounded-md hover:bg-[#094852] transition-colors"
           >
-            Save Preferences
+            {saveButtonText}
           </button>
         </div>
       </div>
