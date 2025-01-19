@@ -10,6 +10,7 @@ class Article(BaseModel):
     url: str
     content: str
     hero_image_url: str|None
+    full_article: str
 
 
 class ArticleChunk(BaseModel):

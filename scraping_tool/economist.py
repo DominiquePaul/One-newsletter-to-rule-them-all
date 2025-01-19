@@ -4,7 +4,7 @@ import json
 import pickle
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 import trafilatura
@@ -40,12 +40,14 @@ def fetch_economist_article(url):
         article_content = trafilatura.extract(
             response.text, output_format="xml", include_comments=False
         )
+        article_date = datetime.strptime(
+            re.search(r"/(\d{4}/\d{2}/\d{2})/", url).group(1), "%Y/%m/%d"
+        ).replace(tzinfo=timezone.utc)
+        
         return Article(
             heading=response.text.split("<h1")[1].split("</h1>")[0].split(">")[1],
             subheading=response.text.split("<h2")[1].split("</h2>")[0].split(">")[1],
-            date=datetime.strptime(
-                re.search(r"/(\d{4}/\d{2}/\d{2})/", url).group(1), "%Y/%m/%d"
-            ),
+            date=article_date,
             url=url,
             content=trafilatura.extract(response.text, output_format="txt", include_comments=False),
             hero_image_url=(
@@ -55,6 +57,7 @@ def fetch_economist_article(url):
                 re.search(r'(https://www\.economist\.com/content-assets[^"]+)', response.text) or
                 re.search(r'(https://[^"]+(?:\.jpg|\.jpeg|\.webp))', response.text)
             ) else None,
+            full_article=trafilatura.extract(response.text, output_format="txt", include_comments=False),
         )
 
 

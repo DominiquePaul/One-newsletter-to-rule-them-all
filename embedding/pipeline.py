@@ -78,9 +78,9 @@ class Pipeline:
     def delete_article(self, url):
         self.collection.data.delete_by_id(generate_uuid5(url))
 
-    def retrieve_articles(
+    def retrieve(
         self,
-        topics: list[str],
+        query: str,
         from_date: datetime = None,
         to_date: datetime = None,
         top_k: int = 10,
@@ -103,63 +103,31 @@ class Pipeline:
                 date_filter["lte"] = to_date.isoformat()
             where_filter = {"path": ["date"], "operator": "And", "valueDate": date_filter}
 
-        response_agg = []
-        for topic in topics:
-            response = self.collection.query.hybrid(
-                query=topic,
-                limit=top_k,
-                target_vector=["heading_vector"],
-                return_metadata=MetadataQuery(
-                    distance=True, score=True, explain_score=True
-                ),
-                filters=where_filter,
-            )
+        response = self.collection.query.hybrid(
+            query=query,
+            limit=top_k,
+            target_vector=["heading_vector"],
+            return_metadata=MetadataQuery(
+                distance=True, score=True, explain_score=True
+            ),
+            filters=where_filter,
+        )
 
-            response_agg.extend(response.objects)
+        output = []
+        for obj in response.objects:
+            output.append(Article(
+                heading=obj.properties["heading"],
+                subheading=obj.properties["subheading"], 
+                date=obj.properties["date"],
+                url=obj.properties["url"],
+                content=obj.properties["content"],
+                hero_image_url=obj.properties["hero_image_url"],
+                full_article=obj.properties["full_article"]
+            ))
 
-        return response_agg
+        return output
     
-    def retrieve_chunks(
-        self,
-        topics: list[str],
-        from_date: datetime = None,
-        to_date: datetime = None,
-        top_k: int = 10,
-    ) -> list[Article]:
-        # Add timezone info if missing, with a warning
-        if from_date and not from_date.tzinfo:
-            print(f"Warning: from_date {from_date} has no timezone info. Assuming UTC.")
-            from_date = from_date.replace(tzinfo=timezone.utc)
-        if to_date and not to_date.tzinfo:
-            print(f"Warning: to_date {to_date} has no timezone info. Assuming UTC.")
-            to_date = to_date.replace(tzinfo=timezone.utc)
-
-        # Add date filtering to the query if dates are provided
-        where_filter = None
-        if from_date or to_date:
-            date_filter = {}
-            if from_date:
-                date_filter["gte"] = from_date.isoformat()
-            if to_date:
-                date_filter["lte"] = to_date.isoformat()
-            where_filter = {"path": ["date"], "operator": "And", "valueDate": date_filter}
-
-        response_agg = []
-        for topic in topics:
-            response = self.collection.query.hybrid(
-                query=topic,
-                limit=top_k,
-                target_vector=["heading_vector"],
-                return_metadata=MetadataQuery(
-                    distance=True, score=True, explain_score=True
-                ),
-                filters=where_filter,
-            )
-
-            response_agg.extend(response.objects)
-
-        return response_agg
-
+    
 
 if __name__ == "__main__":
     try:
