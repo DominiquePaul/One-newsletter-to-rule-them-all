@@ -57,6 +57,7 @@ def fetch_economist_article(url):
                 re.search(r'(https://www\.economist\.com/content-assets[^"]+)', response.text) or
                 re.search(r'(https://[^"]+(?:\.jpg|\.jpeg|\.webp))', response.text)
             ) else None,
+            full_article=trafilatura.extract(response.text, output_format="txt", include_comments=False),
         )
 
 
