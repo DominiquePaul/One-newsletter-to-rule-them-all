@@ -13,10 +13,11 @@ from weaviate_init import init_weaviate_client
 dotenv.load_dotenv()
 
 class RAGQueryEngine:
-    def __init__(self):
+    def __init__(self, verbose=True):
         self.mistral_client = Mistral(api_key=os.getenv("MISTRAL_APIKEY"))
         self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.pipeline = Pipeline(init_weaviate_client())
+        self.verbose = verbose
         
     def query(self, topic: str, num_articles: int = 5, model: str = "mistral") -> tuple[str, str]:
         # 1. Retrieve relevant chunks from Weaviate
@@ -42,7 +43,8 @@ If the answer cannot be found in the context, say so.
                    "Format the bullet points with dashes `-`. "
                    "Do not output any other text besides the bullet points.")
 
-        print(f"""### DEBUG ####\n\n{prompt}\n\n### ###""")
+        if verbose:
+            print(f"""### DEBUG ####\n\n{prompt}\n\n### ###""")
 
         # 3. Get response from selected model
         if model == "mistral":
