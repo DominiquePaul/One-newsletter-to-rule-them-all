@@ -10,8 +10,7 @@ import requests
 import trafilatura
 from tqdm import tqdm
 
-from scraping_tool.article import Article
-
+from models import Article
 
 def fetch_economist_article(url):
     headers = {
@@ -48,7 +47,14 @@ def fetch_economist_article(url):
                 re.search(r"/(\d{4}/\d{2}/\d{2})/", url).group(1), "%Y/%m/%d"
             ),
             url=url,
-            content=article_content,
+            content=trafilatura.extract(response.text, output_format="txt", include_comments=False),
+            hero_image_url=(
+                re.search(r'(https://www\.economist\.com/content-assets[^"]+)', response.text) or 
+                re.search(r'(https://[^"]+(?:\.jpg|\.jpeg|\.webp))', response.text)
+            ).group(1) if (
+                re.search(r'(https://www\.economist\.com/content-assets[^"]+)', response.text) or
+                re.search(r'(https://[^"]+(?:\.jpg|\.jpeg|\.webp))', response.text)
+            ) else None,
         )
 
 
