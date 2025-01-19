@@ -14,8 +14,8 @@ class RAGQueryEngine:
         
     def query(self, topic: str, user_question: str, num_chunks: int = 5) -> str:
         # 1. Retrieve relevant chunks from Weaviate
-        chunks = self.pipeline.retrieve_articles(
-            topics=[topic],
+        chunks = self.pipeline.retrieve(
+            query=topic,
             top_k=num_chunks
         )
         

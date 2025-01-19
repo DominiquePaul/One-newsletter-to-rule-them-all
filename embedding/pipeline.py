@@ -80,7 +80,7 @@ class Pipeline:
 
     def retrieve(
         self,
-        topics: list[str],
+        query: str,
         from_date: datetime = None,
         to_date: datetime = None,
         top_k: int = 10,
@@ -103,21 +103,28 @@ class Pipeline:
                 date_filter["lte"] = to_date.isoformat()
             where_filter = {"path": ["date"], "operator": "And", "valueDate": date_filter}
 
-        response_agg = []
-        for topic in topics:
-            response = self.collection.query.hybrid(
-                query=topic,
-                limit=top_k,
-                target_vector=["heading_vector"],
-                return_metadata=MetadataQuery(
-                    distance=True, score=True, explain_score=True
-                ),
-                filters=where_filter,
-            )
+        response = self.collection.query.hybrid(
+            query=query,
+            limit=top_k,
+            target_vector=["heading_vector"],
+            return_metadata=MetadataQuery(
+                distance=True, score=True, explain_score=True
+            ),
+            filters=where_filter,
+        )
 
-            response_agg.extend(response.objects)
+        output = []
+        for obj in response.objects:
+            output.append(Article(
+                heading=obj.properties["heading"],
+                subheading=obj.properties["subheading"], 
+                date=obj.properties["date"],
+                url=obj.properties["url"],
+                content=obj.properties["content"],
+                hero_image_url=obj.properties["hero_image_url"]
+            ))
 
-        return response_agg
+        return output
     
     
 
