@@ -8,12 +8,12 @@ from typing import List
 load_dotenv()
 
 def send_scandinavian_newsletter(
-    api_key: str,
-    from_email: str,
     recipients: List[str],
     subject: str,
     news_categories: dict[str, List[str]],
-    header_image_url: str = None
+    header_image_url: str = None,
+    from_email: str="dominique@palta-labs.com",
+    api_key: str = os.environ["SENDGRID_API_KEY"],
 ) -> dict:
     """
     Send a Swedish-style newsletter to multiple recipients.
@@ -33,8 +33,11 @@ def send_scandinavian_newsletter(
     # Format news sections
     news_sections_html = ""
     for category, items in news_categories.items():
+        # Convert each item's newlines to <br> tags and properly format bullet points
         items_html = "\n".join([
-            f'<li class="news-item">{item}</li>' 
+            f'''<li class="news-item">{
+                item.strip().replace('\n', '<br>')
+            }</li>''' 
             for item in items
         ])
         news_sections_html += f'''
@@ -130,6 +133,14 @@ def send_scandinavian_newsletter(
                 padding: 12px 0 12px 24px;
                 font-size: 16px;
                 line-height: 1.7;
+                margin-bottom: 16px;  /* Add spacing between items */
+                text-align: left;     /* Ensure left alignment */
+            }}
+            
+            .news-item br {{
+                margin-top: 8px;      /* Add spacing between paragraphs */
+                display: block;
+                content: "";
             }}
             
             .news-item::before {{
@@ -206,8 +217,6 @@ def send_scandinavian_newsletter(
 
 # Example usage
 if __name__ == "__main__":
-    SENDGRID_API_KEY = os.environ["SENDGRID_API_KEY"]
-    FROM_EMAIL = "dominique@palta-labs.com"
     
     # Example data
     recipients = [
@@ -239,8 +248,6 @@ if __name__ == "__main__":
     
     # Send the newsletter
     results = send_scandinavian_newsletter(
-        api_key=SENDGRID_API_KEY,
-        from_email=FROM_EMAIL,
         recipients=recipients,
         subject=subject,
         news_categories=news_categories,

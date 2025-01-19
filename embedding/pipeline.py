@@ -114,12 +114,17 @@ class Pipeline:
         )
 
         output = []
+        seen_urls = set()
         for obj in response.objects:
+            url = obj.properties["url"]
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
             output.append(Article(
                 heading=obj.properties["heading"],
                 subheading=obj.properties["subheading"], 
                 date=obj.properties["date"],
-                url=obj.properties["url"],
+                url=url,
                 content=obj.properties["content"],
                 hero_image_url=obj.properties["hero_image_url"],
                 full_article=obj.properties["full_article"]

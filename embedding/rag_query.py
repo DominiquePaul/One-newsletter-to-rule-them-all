@@ -1,4 +1,3 @@
-import json
 import os
 from pprint import pprint
 
@@ -19,7 +18,7 @@ class RAGQueryEngine:
         self.pipeline = Pipeline(init_weaviate_client())
         self.verbose = verbose
         
-    def query(self, topic: str, num_articles: int = 5, model: str = "mistral") -> tuple[str, str]:
+    def query(self, topic: str, num_articles: int = 15, model: str = "mistral") -> tuple[str, str]:
         # 1. Retrieve relevant chunks from Weaviate
         articles = self.pipeline.retrieve(
             query=topic,
@@ -33,17 +32,18 @@ If the answer cannot be found in the context, say so.
 """
         for article in articles:
             prompt += f"""Article: {article.heading}
-{article.subheading}
+{article.subheading} {article.url}
 
 {article.full_article}
 ------
 """
-        prompt += ("Please summarize the articles to five bullet points. "
-                   "Each bullet point should have between two to four sentences. "
-                   "Format the bullet points with dashes `-`. "
-                   "Do not output any other text besides the bullet points.")
+        prompt += (f"Please summarize the relevant news to the topic: {topic} as bullets. One article should be at most one bullet point. If two articles are related, they can be in the same bullet point. If there are multiple relevant stories to the topic then there should be multiple bullets. "
+                   "Each bullet point should start with a bold mini-headline (<b>Mini headline</b>) followed by 2-4 sentences explaining the story. Separate bullets by a new line (backslash n). "
+                   "Do not output any other text besides the bullet points. Write in the style of the economist's 'The world in brief' newsletter."
+                   "Behind each bullet point, write the source of the information and a link to the article as anchor tag. Use HTML NOT Markdown. If there are multiple sources to a bullet link to both: ({News outlet}: {Article headline 1}, {News outlet (if different from first one)}: {Article headline 2}). Include the parentheses around the links. "
+                   "The mini-headline should be 5-8 words and capture the key point. Make it attention-grabbing but factual.")
 
-        if verbose:
+        if self.verbose:
             print(f"""### DEBUG ####\n\n{prompt}\n\n### ###""")
 
         # 3. Get response from selected model
