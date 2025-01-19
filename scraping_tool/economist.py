@@ -46,7 +46,7 @@ def fetch_economist_article(url):
         
         return Article(
             heading=response.text.split("<h1")[1].split("</h1>")[0].split(">")[1],
-            subheading=response.text.split("<h2")[1].split("</h2>")[0].split(">")[1],
+            subheading=response.text.split("<h1")[1].split("<h2")[1].split("</h2>")[0].split(">")[1],
             date=article_date,
             url=url,
             content=trafilatura.extract(response.text, output_format="txt", include_comments=False),
@@ -109,9 +109,16 @@ def fetch_weekly_edition_urls(edition_url):
 
 
 # Example usage:
-edition_url = "https://www.economist.com/weeklyedition/2025-01-18"
-urls = fetch_weekly_edition_urls(edition_url)
+edition_urls = [
+    "https://www.economist.com/weeklyedition/2025-01-04",
+    "https://www.economist.com/weeklyedition/2025-01-11",
+    "https://www.economist.com/weeklyedition/2025-01-18"]
+
+urls = []
 articles = []
+
+for edition_url in edition_urls:
+    urls.extend(fetch_weekly_edition_urls(edition_url))
 for url in tqdm(urls, desc="Fetching articles"):
     article = fetch_economist_article(url)
     if article:

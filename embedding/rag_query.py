@@ -4,9 +4,10 @@ from pprint import pprint
 
 import dotenv
 from mistralai import Mistral, UserMessage
+from openai import OpenAI
 
 from embedding.pipeline import Pipeline
-from models import Article, Summary
+from models import Article
 from weaviate_init import init_weaviate_client
 
 dotenv.load_dotenv()
@@ -14,9 +15,10 @@ dotenv.load_dotenv()
 class RAGQueryEngine:
     def __init__(self):
         self.mistral_client = Mistral(api_key=os.getenv("MISTRAL_APIKEY"))
+        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.pipeline = Pipeline(init_weaviate_client())
         
-    def query(self, topic: str, num_articles: int = 5) -> tuple[str, str]:
+    def query(self, topic: str, num_articles: int = 5, model: str = "mistral") -> tuple[str, str]:
         # 1. Retrieve relevant chunks from Weaviate
         articles = self.pipeline.retrieve(
             query=topic,
@@ -42,20 +44,31 @@ If the answer cannot be found in the context, say so.
 
         print(f"""### DEBUG ####\n\n{prompt}\n\n### ###""")
 
-        # 3. Get response from Mistral
-        messages = [
-            UserMessage(content=prompt)
-        ]
+        # 3. Get response from selected model
+        if model == "mistral":
+            messages = [
+                UserMessage(content=prompt)
+            ]
+            
+            response = self.mistral_client.chat.complete(
+                model="mistral-large-latest",
+                messages=messages,
+                # response_format={
+                #     "type": "json_object",
+                # }
+            )
+            content = response.choices[0].message.content
+        else:  # OpenAI
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4-turbo-preview",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                # response_format={"type": "json_object"}
+            )
+            content = response.choices[0].message.content
         
-        response = self.mistral_client.chat.complete(
-            model="mistral-large-latest",
-            messages=messages,
-            response_format={
-                "type": "json_object",
-            }
-        )
-        
-        return articles[0].hero_image_url, response.choices[0].message.content
+        return articles[0].hero_image_url, content
 
 
 if __name__ == "__main__":
@@ -66,8 +79,12 @@ if __name__ == "__main__":
     # Fixed the string formatting
     # question = f"What do articles about {topic} report about?"
     
-    print("Querying with Mistral:")
-    mistral_answer = rag.query(topic)
-    pprint(mistral_answer)
+    # print("Querying with Mistral:")
+    # mistral_answer = rag.query(topic, model="mistral")
+    # pprint(mistral_answer)
+    
+    print("\nQuerying with OpenAI:")
+    openai_answer = rag.query(topic, model="openai")
+    pprint(openai_answer)
     
     rag.pipeline.client.close()

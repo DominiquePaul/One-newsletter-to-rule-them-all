@@ -18,3 +18,4 @@ class ArticleChunk(BaseModel):
     embedding: list[float]
     content: str
     num_characters: int
+
