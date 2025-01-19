@@ -37,18 +37,25 @@ if __name__ == "__main__":
     try:
         client = init_weaviate_client()
 
-        # !!!client.collections.delete('Articles')
+        # Delete collection if it exists
+        if client.collections.exists("Articles"):
+            client.collections.delete("Articles")
+
         client.collections.create(
             name="Articles",
             properties=[
                 wc.Property(name="heading", data_type=wc.DataType.TEXT),
                 wc.Property(name="subheading", data_type=wc.DataType.TEXT),
+                wc.Property(name="hero_image_url", data_type=wc.DataType.TEXT),
                 wc.Property(
                     name="date", data_type=wc.DataType.DATE, indexRangeFilters=True
                 ),
                 wc.Property(name="url", data_type=wc.DataType.TEXT),
                 wc.Property(
                     name="content", data_type=wc.DataType.TEXT, indexSearchable=True
+                ),
+                wc.Property(
+                    name="full_article", data_type=wc.DataType.TEXT, indexSearchable=True
                 ),
             ],
             # Define the vectorizer module

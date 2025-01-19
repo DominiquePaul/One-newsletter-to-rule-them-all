@@ -9,6 +9,7 @@ class Article(BaseModel):
     date: datetime
     url: str
     content: str
+    hero_image_url: str|None
 
 
 class ArticleChunk(BaseModel):
