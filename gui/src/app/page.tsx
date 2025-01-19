@@ -1,101 +1,177 @@
-import Image from "next/image";
+'use client';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  // Define state for form fields
+  const [email, setEmail] = useState('');
+  const [selectedSources, setSelectedSources] = useState<string[]>([]);
+  const [interests, setInterests] = useState<string[]>(['Technology']);
+  const [newInterest, setNewInterest] = useState('');
+  const [frequency, setFrequency] = useState('');
+  const [saveButtonText, setSaveButtonText] = useState('Save Preferences');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  // Load saved data on component mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('newsletterPreferences');
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      setEmail(parsed.email || '');
+      setSelectedSources(parsed.selectedSources || []);
+      setInterests(parsed.interests || ['Technology']);
+      setFrequency(parsed.frequency || '');
+    }
+  }, []);
+
+  // Handle form submission
+  const handleSave = () => {
+    const data = {
+      email,
+      selectedSources,
+      interests,
+      frequency
+    };
+    localStorage.setItem('newsletterPreferences', JSON.stringify(data));
+    
+    // Update button text and reset after 2 seconds
+    setSaveButtonText('Saved!');
+    setTimeout(() => {
+      setSaveButtonText('Save Preferences');
+    }, 2000);
+  };
+
+  // Handle adding new interest
+  const handleAddInterest = () => {
+    if (newInterest && !interests.includes(newInterest)) {
+      setInterests([...interests, newInterest]);
+      setNewInterest('');
+    }
+  };
+
+  // Handle removing interest
+  const handleRemoveInterest = (interest: string) => {
+    setInterests(interests.filter(i => i !== interest));
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto py-8 px-4">
+      <div className="bg-white shadow-md rounded-lg p-6 max-w-2xl mx-auto">
+        <div className="space-y-4">
+          <h1 className="text-3xl text-[#0c606c] font-bold mb-4">
+            One Newsletter to rule them all
+          </h1>
+
+          <div className="space-y-1">
+            <label htmlFor="email" className="block font-medium">
+              Email address
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              className="w-full p-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0c606c] focus:border-transparent"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="source" className="block font-medium">
+              Select your news sources
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'nzz', label: 'NZZ' },
+                { id: 'economist', label: 'The Economist' },
+                { id: 'times', label: 'The Times' },
+                { id: 'wsj', label: 'Wall Street Journal' },
+                { id: 'guardian', label: 'The Guardian' }
+              ].map((source) => (
+                <label key={source.id} className="relative flex items-center">
+                  <input
+                    type="checkbox"
+                    value={source.id}
+                    checked={selectedSources.includes(source.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedSources([...selectedSources, source.id]);
+                      } else {
+                        setSelectedSources(selectedSources.filter(s => s !== source.id));
+                      }
+                    }}
+                    className="peer sr-only"
+                    name="sources"
+                  />
+                  <div className="px-3 py-1.5 text-base border border-gray-200 rounded-md cursor-pointer 
+                    peer-checked:border-[#0c606c] peer-checked:text-[#0c606c]
+                    hover:bg-gray-50 peer-checked:hover:bg-gray-50 transition-colors">
+                    {source.label}
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="interests" className="block font-medium">
+              Your interests
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={newInterest}
+                  onChange={(e) => setNewInterest(e.target.value)}
+                  placeholder="Add an interest..."
+                  className="flex-1 p-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0c606c] focus:border-transparent"
+                />
+                <button 
+                  onClick={handleAddInterest}
+                  className="px-3 py-1.5 text-base bg-[#0c606c] text-white rounded-md hover:bg-[#094852] transition-colors">
+                  Add
+                </button>
+              </div>
+              <ul className="space-y-1">
+                {interests.map((interest) => (
+                  <li key={interest} className="flex items-center justify-between p-2 border border-gray-200 rounded-md">
+                    <span>{interest}</span>
+                    <button 
+                      onClick={() => handleRemoveInterest(interest)}
+                      className="text-gray-500 hover:text-red-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="frequency" className="block font-medium">
+              Newsletter frequency
+            </label>
+            <select
+              id="frequency"
+              value={frequency}
+              onChange={(e) => setFrequency(e.target.value)}
+              className="w-full p-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0c606c] focus:border-transparent"
+            >
+              <option value="" disabled>Select frequency</option>
+              <option value="daily">Every day</option>
+              <option value="weekly">Every week</option>
+              <option value="monthly">Every month</option>
+            </select>
+          </div>
+
+          <button
+            onClick={handleSave}
+            className="w-full px-3 py-2 text-base bg-[#0c606c] text-white rounded-md hover:bg-[#094852] transition-colors"
           >
-            Read our docs
-          </a>
+            {saveButtonText}
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
