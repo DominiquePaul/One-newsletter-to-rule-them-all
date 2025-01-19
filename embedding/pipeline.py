@@ -121,7 +121,7 @@ class Pipeline:
                 date=obj.properties["date"],
                 url=obj.properties["url"],
                 content=obj.properties["content"],
-                hero_image_url=obj.properties["hero_image_url"]
+                hero_image_url=obj.properties["hero_image_url"],
                 full_article=obj.properties["full_article"]
             ))
 
