@@ -1,29 +1,28 @@
 import pickle
 from tqdm import tqdm
 from datetime import datetime, timezone
-from pprint import pprint
 
 import dotenv
-from models import Article
 import weaviate
 from weaviate.util import generate_uuid5
 from weaviate.classes.query import MetadataQuery
 
-from weaviate_init import init_weaviate_client
+from src.models import Article
+from src.weaviate_init import init_weaviate_client
 
 dotenv.load_dotenv()
 
 
 class Pipeline:
 
-    def __init__(self, client: weaviate.Client, collection_name: str = "Articles"):
+    def __init__(self, client: weaviate.WeaviateClient, collection_name: str = "Articles"):
         self.client = client
         self.collection = self.client.collections.get(collection_name)
         self.chunk_size = 1000
         self.chunk_overlap = 50
 
     def ingest_article(self, article: Article):
-        chunks = self._create_chunks(article.content)
+        chunks = self._create_chunks(article.article_full)
         base_uuid = generate_uuid5(article.url)
         
         for i, chunk in tqdm(enumerate(chunks), total=len(chunks), desc="Ingesting chunks", leave=False):
@@ -34,7 +33,7 @@ class Pipeline:
             chunk_object = dict(article)
             chunk_object.update({
                 "content": chunk,
-                "full_article": article.content,
+                "full_article": article.article_full,
                 "chunk_index": i,
                 "total_chunks": len(chunks),
                 "parent_uuid": str(base_uuid),
@@ -106,7 +105,7 @@ class Pipeline:
         response = self.collection.query.hybrid(
             query=query,
             limit=top_k,
-            target_vector=["heading_vector"],
+            target_vectors=["heading_vector"],
             return_metadata=MetadataQuery(
                 distance=True, score=True, explain_score=True
             ),
@@ -125,9 +124,9 @@ class Pipeline:
                 subheading=obj.properties["subheading"], 
                 date=obj.properties["date"],
                 url=url,
-                content=obj.properties["content"],
+                content=obj.properties["article_xml"],
                 hero_image_url=obj.properties["hero_image_url"],
-                full_article=obj.properties["full_article"]
+                full_article=obj.properties["article_full"]
             ))
 
         return output

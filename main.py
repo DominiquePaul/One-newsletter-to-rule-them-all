@@ -1,8 +1,10 @@
 import os
-from embedding.rag_query import RAGQueryEngine
-from interface.mail import send_scandinavian_newsletter
-from openai import OpenAI
+
 from tqdm import tqdm
+from openai import OpenAI
+
+from src.embedding.rag_query import RAGQueryEngine
+from src.mail import send_scandinavian_newsletter
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 

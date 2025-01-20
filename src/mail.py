@@ -11,7 +11,7 @@ def send_scandinavian_newsletter(
     recipients: List[str],
     subject: str,
     news_categories: dict[str, List[str]],
-    header_image_url: str = None,
+    header_image_url: str|None = None,
     from_email: str="dominique@palta-labs.com",
     api_key: str = os.environ["SENDGRID_API_KEY"],
 ) -> dict:

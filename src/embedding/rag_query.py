@@ -5,9 +5,8 @@ import dotenv
 from mistralai import Mistral, UserMessage
 from openai import OpenAI
 
-from embedding.pipeline import Pipeline
-from models import Article
-from weaviate_init import init_weaviate_client
+from src.embedding.pipeline import Pipeline
+from src.weaviate_init import init_weaviate_client
 
 dotenv.load_dotenv()
 
@@ -34,7 +33,7 @@ If the answer cannot be found in the context, say so.
             prompt += f"""Article: {article.heading}
 {article.subheading} {article.url}
 
-{article.full_article}
+{article.article_full}
 ------
 """
         prompt += (f"Please summarize the relevant news to the topic: {topic} as bullets. One article should be at most one bullet point. If two articles are related, they can be in the same bullet point. If there are multiple relevant stories to the topic then there should be multiple bullets. "
@@ -54,12 +53,9 @@ If the answer cannot be found in the context, say so.
             
             response = self.mistral_client.chat.complete(
                 model="mistral-large-latest",
-                messages=messages,
-                # response_format={
-                #     "type": "json_object",
-                # }
+                messages=messages, # type: ignore
             )
-            content = response.choices[0].message.content
+            content = response.choices[0].message.content # type: ignore
         else:  # OpenAI
             response = self.openai_client.chat.completions.create(
                 model="gpt-4-turbo-preview",
@@ -70,7 +66,9 @@ If the answer cannot be found in the context, say so.
             )
             content = response.choices[0].message.content
         
-        return articles[0].hero_image_url, content
+        hero_image_url = articles[0].hero_image_url or ""  # Fallback to empty string if None
+        content = content or ""  # Fallback to empty string if None
+        return hero_image_url, content
 
 
 if __name__ == "__main__":
@@ -78,6 +76,7 @@ if __name__ == "__main__":
     rag = RAGQueryEngine()
     
     topic = "Greenland"
+    
     # Fixed the string formatting
     # question = f"What do articles about {topic} report about?"
     
